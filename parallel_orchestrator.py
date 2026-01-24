@@ -299,14 +299,19 @@ class ParallelOrchestrator:
             cmd.append("--yolo")
 
         try:
-            proc = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                cwd=str(AUTOCODER_ROOT),  # Run from autocoder root for proper imports
-                env={**os.environ, "PYTHONUNBUFFERED": "1"},
-            )
+            # CREATE_NO_WINDOW on Windows prevents console window pop-ups
+            popen_kwargs = {
+                "stdin": subprocess.DEVNULL,
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
+                "text": True,
+                "cwd": str(AUTOCODER_ROOT),  # Run from autocoder root for proper imports
+                "env": {**os.environ, "PYTHONUNBUFFERED": "1"},
+            }
+            if sys.platform == "win32":
+                popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+
+            proc = subprocess.Popen(cmd, **popen_kwargs)
         except Exception as e:
             # Reset in_progress on failure
             session = self.get_session()

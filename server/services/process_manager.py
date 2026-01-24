@@ -341,12 +341,18 @@ class AgentProcessManager:
         try:
             # Start subprocess with piped stdout/stderr
             # Use project_dir as cwd so Claude SDK sandbox allows access to project files
-            self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                cwd=str(self.project_dir),
-            )
+            # stdin=DEVNULL prevents blocking if Claude CLI or child process tries to read stdin
+            # CREATE_NO_WINDOW on Windows prevents console window pop-ups
+            popen_kwargs = {
+                "stdin": subprocess.DEVNULL,
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
+                "cwd": str(self.project_dir),
+            }
+            if sys.platform == "win32":
+                popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+
+            self.process = subprocess.Popen(cmd, **popen_kwargs)
 
             # Atomic lock creation - if it fails, another process beat us
             if not self._create_lock():
