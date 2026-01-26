@@ -39,7 +39,8 @@ AVAILABLE_MODELS = [
 VALID_MODELS = [m["id"] for m in AVAILABLE_MODELS]
 
 # Default model and settings
-DEFAULT_MODEL = "claude-opus-4-5-20251101"
+# Respect ANTHROPIC_DEFAULT_OPUS_MODEL env var for Foundry/custom deployments
+DEFAULT_MODEL = os.getenv("ANTHROPIC_DEFAULT_OPUS_MODEL", "claude-opus-4-5-20251101")
 DEFAULT_YOLO_MODE = False
 
 # SQLite connection settings
