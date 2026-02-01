@@ -125,6 +125,7 @@ Configuration in `pyproject.toml`:
 
 - `start.py` - CLI launcher with project creation/selection menu
 - `autonomous_agent_demo.py` - Entry point for running the agent
+- `autocoder_paths.py` - Central path resolution with dual-path backward compatibility and migration
 - `agent.py` - Agent session loop using Claude Agent SDK
 - `client.py` - ClaudeSDKClient configuration with security hooks and MCP servers
 - `security.py` - Bash command allowlist validation (ALLOWED_COMMANDS whitelist)
@@ -197,12 +198,17 @@ Keyboard shortcuts (press `?` for help):
 ### Project Structure for Generated Apps
 
 Projects can be stored in any directory (registered in `~/.autocoder/registry.db`). Each project contains:
-- `prompts/app_spec.txt` - Application specification (XML format)
-- `prompts/initializer_prompt.md` - First session prompt
-- `prompts/coding_prompt.md` - Continuation session prompt
-- `features.db` - SQLite database with feature test cases
-- `.agent.lock` - Lock file to prevent multiple agent instances
+- `.autocoder/prompts/app_spec.txt` - Application specification (XML format)
+- `.autocoder/prompts/initializer_prompt.md` - First session prompt
+- `.autocoder/prompts/coding_prompt.md` - Continuation session prompt
+- `.autocoder/features.db` - SQLite database with feature test cases
+- `.autocoder/.agent.lock` - Lock file to prevent multiple agent instances
 - `.autocoder/allowed_commands.yaml` - Project-specific bash command allowlist (optional)
+- `.autocoder/.gitignore` - Ignores runtime files
+- `CLAUDE.md` - Stays at project root (SDK convention)
+- `app_spec.txt` - Root copy for agent template compatibility
+
+Legacy projects with files at root level (e.g., `features.db`, `prompts/`) are auto-migrated to `.autocoder/` on next agent start. Dual-path resolution ensures old and new layouts work transparently.
 
 ### Security Model
 
@@ -364,12 +370,12 @@ Run coding agents using local models via Ollama v0.14.0+:
 
 ### Prompt Loading Fallback Chain
 
-1. Project-specific: `{project_dir}/prompts/{name}.md`
+1. Project-specific: `{project_dir}/.autocoder/prompts/{name}.md` (or legacy `{project_dir}/prompts/{name}.md`)
 2. Base template: `.claude/templates/{name}.template.md`
 
 ### Agent Session Flow
 
-1. Check if `features.db` has features (determines initializer vs coding agent)
+1. Check if `.autocoder/features.db` has features (determines initializer vs coding agent)
 2. Create ClaudeSDKClient with security settings
 3. Send prompt and stream response
 4. Auto-continue with 3-second delay between sessions

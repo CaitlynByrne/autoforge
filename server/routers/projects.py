@@ -269,8 +269,8 @@ async def delete_project(name: str, delete_files: bool = False):
         raise HTTPException(status_code=404, detail=f"Project '{name}' not found")
 
     # Check if agent is running
-    lock_file = project_dir / ".agent.lock"
-    if lock_file.exists():
+    from autocoder_paths import has_agent_running
+    if has_agent_running(project_dir):
         raise HTTPException(
             status_code=409,
             detail="Cannot delete project while agent is running. Stop the agent first."
@@ -398,8 +398,8 @@ async def reset_project(name: str, full_reset: bool = False):
         raise HTTPException(status_code=404, detail="Project directory not found")
 
     # Check if agent is running
-    lock_file = project_dir / ".agent.lock"
-    if lock_file.exists():
+    from autocoder_paths import has_agent_running
+    if has_agent_running(project_dir):
         raise HTTPException(
             status_code=409,
             detail="Cannot reset project while agent is running. Stop the agent first."
@@ -415,36 +415,58 @@ async def reset_project(name: str, full_reset: bool = False):
 
     deleted_files: list[str] = []
 
-    # Files to delete in quick reset
-    quick_reset_files = [
-        "features.db",
-        "features.db-wal",  # WAL mode journal file
-        "features.db-shm",  # WAL mode shared memory file
-        "assistant.db",
-        "assistant.db-wal",
-        "assistant.db-shm",
-        ".claude_settings.json",
-        ".claude_assistant_settings.json",
+    from autocoder_paths import (
+        get_assistant_db_path,
+        get_claude_assistant_settings_path,
+        get_claude_settings_path,
+        get_features_db_path,
+    )
+
+    # Build list of files to delete using path helpers (finds files at current location)
+    # Plus explicit old-location fallbacks for backward compatibility
+    db_path = get_features_db_path(project_dir)
+    asst_path = get_assistant_db_path(project_dir)
+    reset_files: list[Path] = [
+        db_path,
+        db_path.with_suffix(".db-wal"),
+        db_path.with_suffix(".db-shm"),
+        asst_path,
+        asst_path.with_suffix(".db-wal"),
+        asst_path.with_suffix(".db-shm"),
+        get_claude_settings_path(project_dir),
+        get_claude_assistant_settings_path(project_dir),
+        # Also clean old root-level locations if they exist
+        project_dir / "features.db",
+        project_dir / "features.db-wal",
+        project_dir / "features.db-shm",
+        project_dir / "assistant.db",
+        project_dir / "assistant.db-wal",
+        project_dir / "assistant.db-shm",
+        project_dir / ".claude_settings.json",
+        project_dir / ".claude_assistant_settings.json",
     ]
 
-    for filename in quick_reset_files:
-        file_path = project_dir / filename
+    for file_path in reset_files:
         if file_path.exists():
             try:
+                relative = file_path.relative_to(project_dir)
                 file_path.unlink()
-                deleted_files.append(filename)
+                deleted_files.append(str(relative))
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to delete {filename}: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to delete {file_path.name}: {e}")
 
     # Full reset: also delete prompts directory
     if full_reset:
-        prompts_dir = project_dir / "prompts"
-        if prompts_dir.exists():
-            try:
-                shutil.rmtree(prompts_dir)
-                deleted_files.append("prompts/")
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to delete prompts/: {e}")
+        from autocoder_paths import get_prompts_dir
+        # Delete prompts from both possible locations
+        for prompts_dir in [get_prompts_dir(project_dir), project_dir / "prompts"]:
+            if prompts_dir.exists():
+                try:
+                    relative = prompts_dir.relative_to(project_dir)
+                    shutil.rmtree(prompts_dir)
+                    deleted_files.append(f"{relative}/")
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail=f"Failed to delete prompts: {e}")
 
     return {
         "success": True,

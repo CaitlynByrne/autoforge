@@ -63,7 +63,8 @@ class ConversationMessage(Base):
 
 def get_db_path(project_dir: Path) -> Path:
     """Get the path to the assistant database for a project."""
-    return project_dir / "assistant.db"
+    from autocoder_paths import get_assistant_db_path
+    return get_assistant_db_path(project_dir)
 
 
 def get_engine(project_dir: Path):

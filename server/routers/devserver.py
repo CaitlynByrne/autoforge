@@ -6,6 +6,7 @@ API endpoints for dev server control (start/stop) and configuration.
 Uses project registry for path lookups and project_config for command detection.
 """
 
+import logging
 import re
 import sys
 from pathlib import Path
@@ -33,6 +34,9 @@ if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
 from registry import get_project_path as registry_get_project_path
+from security import extract_commands, get_effective_commands, is_command_allowed
+
+logger = logging.getLogger(__name__)
 
 
 def _get_project_path(project_name: str) -> Path | None:
@@ -106,6 +110,45 @@ def get_project_devserver_manager(project_name: str):
     return get_devserver_manager(project_name, project_dir)
 
 
+def validate_dev_command(command: str, project_dir: Path) -> None:
+    """
+    Validate a dev server command against the security allowlist.
+
+    Extracts all commands from the shell string and checks each against
+    the effective allowlist (global + org + project). Raises HTTPException
+    if any command is blocked or not allowed.
+
+    Args:
+        command: The shell command string to validate
+        project_dir: Project directory for loading project-level allowlists
+
+    Raises:
+        HTTPException 400: If the command fails validation
+    """
+    commands = extract_commands(command)
+    if not commands:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not parse command for security validation"
+        )
+
+    allowed_commands, blocked_commands = get_effective_commands(project_dir)
+
+    for cmd in commands:
+        if cmd in blocked_commands:
+            logger.warning("Blocked dev server command '%s' (in blocklist) for project dir %s", cmd, project_dir)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Command '{cmd}' is blocked and cannot be used as a dev server command"
+            )
+        if not is_command_allowed(cmd, allowed_commands):
+            logger.warning("Rejected dev server command '%s' (not in allowlist) for project dir %s", cmd, project_dir)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Command '{cmd}' is not in the allowed commands list"
+            )
+
+
 # ============================================================================
 # Endpoints
 # ============================================================================
@@ -167,7 +210,10 @@ async def start_devserver(
             detail="No dev command available. Configure a custom command or ensure project type can be detected."
         )
 
-    # Now command is definitely str
+    # Validate command against security allowlist before execution
+    validate_dev_command(command, project_dir)
+
+    # Now command is definitely str and validated
     success, message = await manager.start(command)
 
     return DevServerActionResponse(
@@ -258,6 +304,9 @@ async def update_devserver_config(
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
     else:
+        # Validate command against security allowlist before persisting
+        validate_dev_command(update.custom_command, project_dir)
+
         # Set the custom command
         try:
             set_dev_command(project_dir, update.custom_command)

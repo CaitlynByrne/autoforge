@@ -18,7 +18,8 @@ TEMPLATES_DIR = Path(__file__).parent / ".claude" / "templates"
 
 def get_project_prompts_dir(project_dir: Path) -> Path:
     """Get the prompts directory for a specific project."""
-    return project_dir / "prompts"
+    from autocoder_paths import get_prompts_dir
+    return get_prompts_dir(project_dir)
 
 
 def load_prompt(name: str, project_dir: Path | None = None) -> str:
@@ -190,9 +191,9 @@ def scaffold_project_prompts(project_dir: Path) -> Path:
     project_prompts = get_project_prompts_dir(project_dir)
     project_prompts.mkdir(parents=True, exist_ok=True)
 
-    # Create .autocoder directory for configuration files
-    autocoder_dir = project_dir / ".autocoder"
-    autocoder_dir.mkdir(parents=True, exist_ok=True)
+    # Create .autocoder directory with .gitignore for runtime files
+    from autocoder_paths import ensure_autocoder_dir
+    autocoder_dir = ensure_autocoder_dir(project_dir)
 
     # Define template mappings: (source_template, destination_name)
     templates = [

@@ -128,7 +128,8 @@ class ExpandChatSession:
             return
 
         # Verify project has existing spec
-        spec_path = self.project_dir / "prompts" / "app_spec.txt"
+        from autocoder_paths import get_prompts_dir
+        spec_path = get_prompts_dir(self.project_dir) / "app_spec.txt"
         if not spec_path.exists():
             yield {
                 "type": "error",
@@ -166,7 +167,9 @@ class ExpandChatSession:
                 ],
             },
         }
-        settings_file = self.project_dir / f".claude_settings.expand.{uuid.uuid4().hex}.json"
+        from autocoder_paths import get_expand_settings_path
+        settings_file = get_expand_settings_path(self.project_dir, uuid.uuid4().hex)
+        settings_file.parent.mkdir(parents=True, exist_ok=True)
         self._settings_file = settings_file
         with open(settings_file, "w", encoding="utf-8") as f:
             json.dump(security_settings, f, indent=2)

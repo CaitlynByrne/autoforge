@@ -92,7 +92,8 @@ class AgentProcessManager:
         self._callbacks_lock = threading.Lock()
 
         # Lock file to prevent multiple instances (stored in project directory)
-        self.lock_file = self.project_dir / ".agent.lock"
+        from autocoder_paths import get_agent_lock_path
+        self.lock_file = get_agent_lock_path(self.project_dir)
 
     @property
     def status(self) -> Literal["stopped", "running", "paused", "crashed"]:
@@ -579,8 +580,18 @@ def cleanup_orphaned_locks() -> int:
             if not project_path.exists():
                 continue
 
-            lock_file = project_path / ".agent.lock"
-            if not lock_file.exists():
+            # Check both legacy and new locations for lock files
+            from autocoder_paths import get_autocoder_dir
+            lock_locations = [
+                project_path / ".agent.lock",
+                get_autocoder_dir(project_path) / ".agent.lock",
+            ]
+            lock_file = None
+            for candidate in lock_locations:
+                if candidate.exists():
+                    lock_file = candidate
+                    break
+            if lock_file is None:
                 continue
 
             try:

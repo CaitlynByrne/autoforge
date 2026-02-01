@@ -222,7 +222,14 @@ if UI_DIST_DIR.exists():
             raise HTTPException(status_code=404)
 
         # Try to serve the file directly
-        file_path = UI_DIST_DIR / path
+        file_path = (UI_DIST_DIR / path).resolve()
+
+        # Ensure resolved path is within UI_DIST_DIR (prevent path traversal)
+        try:
+            file_path.relative_to(UI_DIST_DIR.resolve())
+        except ValueError:
+            raise HTTPException(status_code=404)
+
         if file_path.exists() and file_path.is_file():
             return FileResponse(file_path)
 

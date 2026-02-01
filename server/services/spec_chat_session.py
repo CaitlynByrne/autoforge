@@ -125,7 +125,8 @@ class SpecChatSession:
         # Delete app_spec.txt so Claude can create it fresh
         # The SDK requires reading existing files before writing, but app_spec.txt is created new
         # Note: We keep initializer_prompt.md so Claude can read and update the template
-        prompts_dir = self.project_dir / "prompts"
+        from autocoder_paths import get_prompts_dir
+        prompts_dir = get_prompts_dir(self.project_dir)
         app_spec_path = prompts_dir / "app_spec.txt"
         if app_spec_path.exists():
             app_spec_path.unlink()
@@ -145,7 +146,9 @@ class SpecChatSession:
                 ],
             },
         }
-        settings_file = self.project_dir / ".claude_settings.json"
+        from autocoder_paths import get_claude_settings_path
+        settings_file = get_claude_settings_path(self.project_dir)
+        settings_file.parent.mkdir(parents=True, exist_ok=True)
         with open(settings_file, "w") as f:
             json.dump(security_settings, f, indent=2)
 

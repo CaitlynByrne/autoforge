@@ -360,7 +360,9 @@ def create_client(
     project_dir.mkdir(parents=True, exist_ok=True)
 
     # Write settings to a file in the project directory
-    settings_file = project_dir / ".claude_settings.json"
+    from autocoder_paths import get_claude_settings_path
+    settings_file = get_claude_settings_path(project_dir)
+    settings_file.parent.mkdir(parents=True, exist_ok=True)
     with open(settings_file, "w") as f:
         json.dump(security_settings, f, indent=2)
 
