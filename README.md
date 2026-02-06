@@ -6,9 +6,9 @@ A long-running autonomous coding agent powered by the Claude Agent SDK. This too
 
 ## Video Tutorial
 
-[![Watch the tutorial](https://img.youtube.com/vi/lGWFlpffWk4/hqdefault.jpg)](https://youtu.be/lGWFlpffWk4)
+[![Watch the tutorial](https://img.youtube.com/vi/nKiPOxDpcJY/hqdefault.jpg)](https://youtu.be/nKiPOxDpcJY)
 
-> **[Watch the setup and usage guide →](https://youtu.be/lGWFlpffWk4)**
+> **[Watch the setup and usage guide →](https://youtu.be/nKiPOxDpcJY)**
 
 ---
 
