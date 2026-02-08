@@ -144,7 +144,7 @@ export interface FeatureUpdate {
 }
 
 // Agent types
-export type AgentStatus = 'stopped' | 'running' | 'paused' | 'crashed' | 'loading'
+export type AgentStatus = 'stopped' | 'running' | 'paused' | 'crashed' | 'loading' | 'pausing' | 'paused_graceful'
 
 export interface AgentStatusResponse {
   status: AgentStatus
@@ -240,6 +240,8 @@ export type OrchestratorState =
   | 'spawning'
   | 'monitoring'
   | 'complete'
+  | 'draining'
+  | 'paused'
 
 // Orchestrator event for recent activity
 export interface OrchestratorEvent {
