@@ -36,6 +36,7 @@ from .routers import (
     expand_project_router,
     features_router,
     filesystem_router,
+    log_review_router,
     projects_router,
     schedules_router,
     settings_router,
@@ -50,6 +51,7 @@ from .services.dev_server_manager import (
     cleanup_orphaned_devserver_locks,
 )
 from .services.expand_chat_session import cleanup_all_expand_sessions
+from .services.log_review_session import cleanup_all_log_review_sessions
 from .services.process_manager import cleanup_all_managers, cleanup_orphaned_locks
 from .services.scheduler_service import cleanup_scheduler, get_scheduler
 from .services.terminal_manager import cleanup_all_terminals
@@ -78,6 +80,7 @@ async def lifespan(app: FastAPI):
     await cleanup_all_managers()
     await cleanup_assistant_sessions()
     await cleanup_all_expand_sessions()
+    await cleanup_all_log_review_sessions()
     await cleanup_all_terminals()
     await cleanup_all_devservers()
 
@@ -156,6 +159,7 @@ app.include_router(schedules_router)
 app.include_router(devserver_router)
 app.include_router(spec_creation_router)
 app.include_router(expand_project_router)
+app.include_router(log_review_router)
 app.include_router(filesystem_router)
 app.include_router(assistant_chat_router)
 app.include_router(settings_router)

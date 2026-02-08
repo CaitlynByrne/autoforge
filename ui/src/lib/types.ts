@@ -533,6 +533,21 @@ export type ExpandChatServerMessage =
   | SpecChatPongMessage        // Reuse pong message type
   | SpecChatResponseDoneMessage // Reuse response_done type
 
+// ============================================================================
+// Log Review Chat Types
+// ============================================================================
+
+export interface LogReviewAnalysisCompleteMessage {
+  type: 'analysis_complete'
+}
+
+export type LogReviewServerMessage =
+  | SpecChatTextMessage        // Reuse text message type
+  | LogReviewAnalysisCompleteMessage
+  | SpecChatErrorMessage       // Reuse error message type
+  | SpecChatPongMessage        // Reuse pong message type
+  | SpecChatResponseDoneMessage // Reuse response_done type
+
 // Bulk feature creation
 export interface FeatureBulkCreate {
   features: FeatureCreate[]

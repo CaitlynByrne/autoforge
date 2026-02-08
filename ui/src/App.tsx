@@ -18,6 +18,7 @@ import { CelebrationOverlay } from './components/CelebrationOverlay'
 import { AssistantFAB } from './components/AssistantFAB'
 import { AssistantPanel } from './components/AssistantPanel'
 import { ExpandProjectModal } from './components/ExpandProjectModal'
+import { LogReviewModal } from './components/LogReviewModal'
 import { SpecCreationChat } from './components/SpecCreationChat'
 import { SettingsModal } from './components/SettingsModal'
 import { DevServerControl } from './components/DevServerControl'
@@ -28,7 +29,7 @@ import { ThemeSelector } from './components/ThemeSelector'
 import { ResetProjectModal } from './components/ResetProjectModal'
 import { ProjectSetupRequired } from './components/ProjectSetupRequired'
 import { getDependencyGraph, startAgent } from './lib/api'
-import { Loader2, Settings, Moon, Sun, RotateCcw, BookOpen } from 'lucide-react'
+import { Loader2, Settings, Moon, Sun, RotateCcw, BookOpen, SearchCode } from 'lucide-react'
 import type { Feature } from './lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -64,6 +65,7 @@ function App() {
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
   const [isSpecCreating, setIsSpecCreating] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
+  const [showLogReview, setShowLogReview] = useState(false)
   const [showSpecChat, setShowSpecChat] = useState(false)  // For "Create Spec" button in empty kanban
   const [specInitializerStatus, setSpecInitializerStatus] = useState<InitializerStatus>('idle')
   const [specInitializerError, setSpecInitializerError] = useState<string | null>(null)
@@ -204,6 +206,12 @@ function App() {
         setViewMode(prev => prev === 'kanban' ? 'graph' : 'kanban')
       }
 
+      // L : Open log review (when project selected)
+      if ((e.key === 'l' || e.key === 'L') && selectedProject) {
+        e.preventDefault()
+        setShowLogReview(true)
+      }
+
       // ? : Show keyboard shortcuts help
       if (e.key === '?') {
         e.preventDefault()
@@ -220,6 +228,8 @@ function App() {
       if (e.key === 'Escape') {
         if (showKeyboardHelp) {
           setShowKeyboardHelp(false)
+        } else if (showLogReview) {
+          setShowLogReview(false)
         } else if (showResetModal) {
           setShowResetModal(false)
         } else if (showExpandProject) {
@@ -240,7 +250,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedProject, showAddFeature, showExpandProject, selectedFeature, debugOpen, debugActiveTab, assistantOpen, features, showSettings, showKeyboardHelp, isSpecCreating, viewMode, showResetModal, wsState.agentStatus, hasSpec])
+  }, [selectedProject, showAddFeature, showExpandProject, selectedFeature, debugOpen, debugActiveTab, assistantOpen, features, showSettings, showKeyboardHelp, isSpecCreating, viewMode, showResetModal, showLogReview, wsState.agentStatus, hasSpec])
 
   // Combine WebSocket progress with feature data
   const progress = wsState.progress.total > 0 ? wsState.progress : {
@@ -358,6 +368,20 @@ function App() {
                 />
 
                 <div className="flex-1" />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setShowLogReview(true)}
+                      variant="outline"
+                      size="sm"
+                      aria-label="Review Logs"
+                    >
+                      <SearchCode size={18} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Review Logs (L)</TooltipContent>
+                </Tooltip>
 
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -522,6 +546,15 @@ function App() {
             // Invalidate features query to refresh the kanban board
             queryClient.invalidateQueries({ queryKey: ['features', selectedProject] })
           }}
+        />
+      )}
+
+      {/* Log Review Modal - AI-powered agent log analysis */}
+      {showLogReview && selectedProject && (
+        <LogReviewModal
+          isOpen={showLogReview}
+          projectName={selectedProject}
+          onClose={() => setShowLogReview(false)}
         />
       )}
 
