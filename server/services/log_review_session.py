@@ -10,7 +10,6 @@ reads project config files, then streams a structured analysis via Claude.
 import asyncio
 import json
 import logging
-import os
 import shutil
 import sys
 import threading
@@ -311,9 +310,9 @@ Top 5 prioritized changes, ordered by impact. Each should be a concrete, actiona
             json.dump(security_settings, f, indent=2)
 
         # Build environment overrides
-        from registry import DEFAULT_MODEL, get_effective_sdk_env
+        from registry import get_effective_sdk_env, get_model_for_role
         sdk_env = get_effective_sdk_env()
-        model = sdk_env.get("ANTHROPIC_DEFAULT_OPUS_MODEL") or os.getenv("ANTHROPIC_DEFAULT_OPUS_MODEL", DEFAULT_MODEL)
+        model = get_model_for_role("log_review")
 
         # Build MCP servers config for feature read tools
         mcp_servers = {
