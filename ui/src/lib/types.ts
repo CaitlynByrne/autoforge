@@ -538,11 +538,22 @@ export interface ProviderInfo {
   models: ModelInfo[]
   default_model: string
   requires_auth: boolean
+  tiers?: { high: string; mid: string; low: string }
 }
 
 export interface ProvidersResponse {
   providers: ProviderInfo[]
   current: string
+}
+
+export interface RoleModelAssignment {
+  initializer: string | null
+  coding: string | null
+  testing: string | null
+  spec_creation: string | null
+  expand: string | null
+  assistant: string | null
+  log_review: string | null
 }
 
 export interface Settings {
@@ -557,6 +568,7 @@ export interface Settings {
   api_base_url: string | null
   api_has_auth_token: boolean
   api_model: string | null
+  role_models: RoleModelAssignment | null
 }
 
 export interface SettingsUpdate {
@@ -569,6 +581,7 @@ export interface SettingsUpdate {
   api_base_url?: string
   api_auth_token?: string
   api_model?: string
+  role_models?: Partial<RoleModelAssignment>
 }
 
 export interface ProjectSettingsUpdate {

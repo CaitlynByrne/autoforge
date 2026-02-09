@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Loader2, AlertCircle, Check, Moon, Sun, Eye, EyeOff, ShieldCheck } from 'lucide-react'
+import { Loader2, AlertCircle, Check, Moon, Sun, Eye, EyeOff, ShieldCheck, ChevronDown, ChevronRight } from 'lucide-react'
 import { useSettings, useUpdateSettings, useAvailableModels, useAvailableProviders } from '../hooks/useProjects'
 import { useTheme, THEMES } from '../hooks/useTheme'
-import type { ProviderInfo } from '../lib/types'
+import type { ProviderInfo, RoleModelAssignment } from '../lib/types'
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [authTokenInput, setAuthTokenInput] = useState('')
   const [customModelInput, setCustomModelInput] = useState('')
   const [customBaseUrlInput, setCustomBaseUrlInput] = useState('')
+  const [showRoleModels, setShowRoleModels] = useState(false)
 
   const handleYoloToggle = () => {
     if (settings && !updateSettings.isPending) {
@@ -95,6 +96,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   }
 
+  const handleRoleModelChange = (role: keyof RoleModelAssignment, modelId: string) => {
+    if (!updateSettings.isPending) {
+      updateSettings.mutate({ role_models: { [role]: modelId } })
+    }
+  }
+
   const providers = providersData?.providers ?? []
   const models = modelsData?.models ?? []
   const isSaving = updateSettings.isPending
@@ -107,7 +114,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-sm max-h-[85vh] overflow-y-auto">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Settings
@@ -352,6 +359,55 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
               )}
             </div>
+
+            {/* Per-Role Model Assignment */}
+            {models.length > 1 && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowRoleModels(!showRoleModels)}
+                  className="flex items-center gap-1.5 font-medium text-sm hover:text-primary transition-colors"
+                >
+                  {showRoleModels ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  Model per Task
+                </button>
+                {showRoleModels && (
+                  <div className="space-y-2 pl-1">
+                    <p className="text-xs text-muted-foreground">
+                      Override the model used for each task type. Leave as "Default" to use the recommended tier-based defaults.
+                    </p>
+                    {([
+                      { role: 'initializer' as const, label: 'Initialization', tier: 'high' },
+                      { role: 'coding' as const, label: 'Coding', tier: 'mid' },
+                      { role: 'testing' as const, label: 'Testing', tier: 'low' },
+                      { role: 'spec_creation' as const, label: 'Spec Creation', tier: 'high' },
+                      { role: 'expand' as const, label: 'Expansion', tier: 'high' },
+                      { role: 'assistant' as const, label: 'Assistant', tier: 'mid' },
+                      { role: 'log_review' as const, label: 'Log Review', tier: 'low' },
+                    ]).map(({ role, label, tier }) => {
+                      const currentValue = settings.role_models?.[role] ?? ''
+                      const tierDefault = currentProviderInfo?.tiers?.[tier as keyof typeof currentProviderInfo.tiers]
+                      const tierModelName = models.find(m => m.id === tierDefault)?.name ?? tierDefault ?? 'Default'
+                      return (
+                        <div key={role} className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-muted-foreground min-w-[80px]">{label}</span>
+                          <select
+                            value={currentValue}
+                            onChange={(e) => handleRoleModelChange(role, e.target.value)}
+                            disabled={isSaving}
+                            className="flex-1 py-1 px-2 text-xs border rounded bg-background min-w-0"
+                          >
+                            <option value="">Default ({tierModelName})</option>
+                            {models.map((model) => (
+                              <option key={model.id} value={model.id}>{model.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             <hr className="border-border" />
 
