@@ -210,8 +210,8 @@ function App() {
         setShowKeyboardHelp(true)
       }
 
-      // R : Open reset modal (when project selected and agent not running)
-      if ((e.key === 'r' || e.key === 'R') && selectedProject && wsState.agentStatus !== 'running') {
+      // R : Open reset modal (when project selected and agent not running/draining)
+      if ((e.key === 'r' || e.key === 'R') && selectedProject && !['running', 'pausing', 'paused_graceful'].includes(wsState.agentStatus)) {
         e.preventDefault()
         setShowResetModal(true)
       }
@@ -380,7 +380,7 @@ function App() {
                       variant="outline"
                       size="sm"
                       aria-label="Reset Project"
-                      disabled={wsState.agentStatus === 'running'}
+                      disabled={['running', 'pausing', 'paused_graceful'].includes(wsState.agentStatus)}
                     >
                       <RotateCcw size={18} />
                     </Button>

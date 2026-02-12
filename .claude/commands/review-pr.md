@@ -73,3 +73,20 @@ Pull request(s): $ARGUMENTS
      - The key concerns, if any (or "no significant concerns")
      - **Verdict: MERGE** / **MERGE (with minor follow-up)** / **DON'T MERGE** with a one-line reason
    - This section should be scannable in under 10 seconds
+
+10. **Post-Review Action**
+    - Immediately after the TLDR, provide a `## Recommended Action` section
+    - Based on the verdict, recommend one of the following actions:
+
+    **If verdict is MERGE (no concerns):**
+    - Recommend merging as-is. No further action needed.
+
+    **If verdict is MERGE (with minor follow-up):**
+    - If the concerns are low-risk and straightforward to fix (e.g., naming tweaks, small refactors, missing type annotations, minor style issues, trivial bug fixes), recommend merging the PR now and offer to immediately address the concerns in a follow-up commit directly on the target branch
+    - List the specific changes you would make in the follow-up
+    - Ask the user: *"Should I merge this PR and push a follow-up commit addressing these concerns?"*
+
+    **If verdict is DON'T MERGE:**
+    - If the blocking concerns are still relatively contained and you are confident you can resolve them quickly (e.g., a small bug fix, a missing validation, a straightforward architectural adjustment), recommend merging the PR and immediately addressing the issues in a follow-up commit — but only if the fixes are low-risk and well-understood
+    - If the issues are too complex, risky, or require author input (e.g., design decisions, major refactors, unclear intent), recommend sending the PR back to the author with specific feedback on what needs to change
+    - Be honest about your confidence level — if you're unsure whether you can address the concerns correctly, say so and defer to the author
